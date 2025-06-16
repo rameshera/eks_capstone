@@ -1,0 +1,13 @@
+{
+  "name": "hello-app",
+  "version": "1.0.0",
+  "description": "Simple Hello App for EKS with DB connection",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "pg": "^8.7.1"
+  }
+}

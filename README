@@ -1,0 +1,47 @@
+1. Create and configure the deployment environment
+
+	I have repurposed existing deployment server name "deploy-ERB"
+	which contains tools such as Docker, Kubectl, EKSCTL, and any tools required to test your application.
+      Also added necesssary IAM secert keys to provision reset of the EKS cluster and resources.
+
+2. Containerize your application and store it in a repository
+
+	a)I have created sample nodejs "helloapp" under /app with all the required application files, dependendcies and Dockerfile
+      Also I have created to image version's "eks-capstone-app-v1" and "eks-capstone-app-v2" with slight page modfications.
+      And uploaded images in ECR repo
+	7323702303652.dkr.ecr.us-east-1.amazonaws.com/eks-capstone:eks-capstone-app-v1
+	7323702303652.dkr.ecr.us-east-1.amazonaws.com/eks-capstone:eks-capstone-app-v2
+
+      b)Similarly I have created PostgresDB as well under /db with required Dockerfile
+      7323702303652.dkr.ecr.us-east-1.amazonaws.com/eks-capstone:eks-capstone-db-v1
+
+3. Deploy an EKS cluster
+   
+	I have created cluster.yaml with the control plane version 1.31, node group with 2.medium instances on spot instance.
+  	Run this command to create the cluster # eksctl create cluster -f cluster.yaml which is under "/ekscluster" dir
+
+4. Deploy your web-based application, including the backend database
+
+I have carried out below steps
+  Namespace: Dedicated namespace hello-app for all resources
+  ConfigMap & Secret: For configuration and sensitive data
+  PostgreSQL Database: Deployment with 1 replica and Persistent storage using PVC. Also ClusterIP Service for internal access
+  Node.js Application: Deployment with initial 2 replicas, Resource requests and limits, Health checks (readiness and liveness probes), LoadBalancer Service for external access
+  Auto-scaling: HorizontalPodAutoscaler that scales from 2-6 pods based on 70% CPU utilization
+  Storageclass : To create storage class of gp2 volume
+  App Service and DB Service : Created external ALB service for app and Cluster IP for DB.
+  All the config files under "/deployment" folder
+
+5. Test updating your application with a blue/green update
+
+  I have carried out below steps 
+  Created Blue and Green deployment with proper selector configured.
+  All the files configured "/bg" folder
+
+Switch to green version
+kubectl patch service hello-app-service -n hello-app -p '{"spec":{"selector":{"version":"green"}}}'
+kubectl patch service postgres -n hello-app -p '{"spec":{"selector":{"app":"postgres","version":"green"}}}'
+
+Switch to blue version
+kubectl patch service hello-app-service -n hello-app -p '{"spec":{"selector":{"version":"blue"}}}'
+kubectl patch service postgres -n hello-app -p '{"spec":{"selector":{"app":"postgres","version":"blue"}}}'
